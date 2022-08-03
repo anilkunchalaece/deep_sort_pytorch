@@ -5,9 +5,9 @@ import cv2
 import logging
 
 from .model import Net
-from fastreid.config import get_cfg
-from fastreid.engine import DefaultTrainer
-from fastreid.utils.checkpoint import Checkpointer
+# from fastreid.config import get_cfg
+# from fastreid.engine import DefaultTrainer
+# from fastreid.utils.checkpoint import Checkpointer
 
 class Extractor(object):
     def __init__(self, model_path, use_cuda=True):
@@ -88,7 +88,7 @@ class FastReIDExtractor(object):
 
 
 if __name__ == '__main__':
-    img = cv2.imread("demo.jpg")[:,:,(2,1,0)]
+    img = cv2.imread("demo/1.jpg")[:,:,(2,1,0)]
     extr = Extractor("checkpoint/ckpt.t7")
     feature = extr(img)
     print(feature.shape)

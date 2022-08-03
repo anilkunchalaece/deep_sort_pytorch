@@ -110,6 +110,7 @@ class DeepSort(object):
             im_crops.append(im)
         if im_crops:
             features = self.extractor(im_crops)
+            print(features.shape)
         else:
             features = np.array([])
         return features

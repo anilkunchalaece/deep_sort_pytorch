@@ -17,8 +17,6 @@ from utils.parser import get_config
 from utils.log import get_logger
 from utils.io import write_results
 
-
-
 class VideoTracker(object):
     def __init__(self, cfg, args, video_path):
         self.cfg = cfg
