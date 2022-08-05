@@ -1,5 +1,5 @@
 from .YOLOv3 import YOLOv3
-from .MMDet import MMDet
+# from .MMDet import MMDet
 
 
 __all__ = ['build_detector']

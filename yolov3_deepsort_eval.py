@@ -5,7 +5,7 @@ import argparse
 from pathlib import Path
 
 from utils.log import get_logger
-from yolov3_deepsort import VideoTracker
+from deepsort import VideoTracker, imgSeqTracker
 from utils.parser import get_config
 
 import motmetrics as mm
@@ -25,21 +25,30 @@ def main(data_root='', seqs=('',), args=""):
     cfg = get_config()
     cfg.merge_from_file(args.config_detection)
     cfg.merge_from_file(args.config_deepsort)
+    cfg.USE_FASTREID = False
+    cfg.USE_MMDET = False
+    cfg.USE_FSINET = False
 
     # run tracking
     accs = []
     for seq in seqs:
         logger.info('start seq: {}'.format(seq))
         result_filename = os.path.join(result_root, '{}.txt'.format(seq))
-        video_path = data_root+"/"+seq+"/video/video.mp4"
+        # video_path = data_root+"/"+seq+"/video/video.mp4"
+        src_dir = data_root+"/"+seq+"/img1"
 
-        with VideoTracker(cfg, args, video_path, result_filename) as vdo_trk:
-            vdo_trk.run()
+        # with VideoTracker(cfg, args, video_path) as vdo_trk:
+        #     vdo_trk.run()
+
+        img_trk =  imgSeqTracker(cfg, args, src_dir,result_filename)
+        img_trk.run()
 
         # eval
         logger.info('Evaluate seq: {}'.format(seq))
         evaluator = Evaluator(data_root, seq, data_type)
         accs.append(evaluator.eval_file(result_filename))
+        print(F"results saved in {result_filename}")
+        # return
 
     # get summary
     metrics = mm.metrics.motchallenge_metrics
@@ -62,7 +71,7 @@ def parse_args():
     parser.add_argument("--frame_interval", type=int, default=1)
     parser.add_argument("--display_width", type=int, default=800)
     parser.add_argument("--display_height", type=int, default=600)
-    parser.add_argument("--save_path", type=str, default="./demo/demo.avi")
+    parser.add_argument("--save_path", type=str, default="./output")
     parser.add_argument("--cpu", dest="use_cuda", action="store_false", default=True)
     parser.add_argument("--camera", action="store", dest="cam", type=int, default="-1")
     return parser.parse_args()
@@ -70,15 +79,22 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    seqs_str = '''MOT16-02       
-                  MOT16-04
+    # seqs_str = '''MOT16-02       
+    #               MOT16-04
+    #               MOT16-05
+    #               MOT16-09
+    #               MOT16-10
+    #               MOT16-11
+    #               MOT16-13
+    #               '''     
+
+    seqs_str = '''
+                  MOT16-02       
                   MOT16-05
-                  MOT16-09
-                  MOT16-10
-                  MOT16-11
-                  MOT16-13
-                  '''        
-    data_root = 'data/dataset/MOT16/train/'
+                  '''     
+
+
+    data_root = '/home/akunchala/Documents/z_Datasets/MOT16/train'
 
     seqs = [seq.strip() for seq in seqs_str.split()]
 

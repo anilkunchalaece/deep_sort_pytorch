@@ -89,7 +89,7 @@ class VideoTracker(object):
 
             # do detection
             bbox_xywh, cls_conf, cls_ids = self.detector(im)
-
+            # print(bbox_xywh)
             # select person class
             mask = cls_ids == 0
 
@@ -124,20 +124,101 @@ class VideoTracker(object):
 
             # save results
             write_results(self.save_results_path, results, 'mot')
-
             # logging
             self.logger.info("time: {:.03f}s, fps: {:.03f}, detection numbers: {}, tracking numbers: {}" \
                              .format(end - start, 1 / (end - start), bbox_xywh.shape[0], len(outputs)))
 
 
+class imgSeqTracker:
+    def __init__(self,cfg,args,srcDir, save_results_path=None):
+        print("running deepsort on image sequences")
+        # sort the image sequences
+        self.srcDir = srcDir
+        self.args = args
+        self.cfg = cfg
+
+        self.image_names = sorted(os.listdir(self.srcDir), key= lambda x : int(x.split(".")[0]))
+
+        use_cuda = args.use_cuda and torch.cuda.is_available()
+
+        self.detector = build_detector(cfg, use_cuda=use_cuda)
+        self.deepsort = build_tracker(cfg, use_cuda=use_cuda)
+        self.class_names = self.detector.class_names
+
+        self.save_video_path = os.path.join(self.args.save_path, "results.avi")
+        if save_results_path == None :
+            self.save_results_path = os.path.join(self.args.save_path, "results.txt")
+        else :
+            self.save_results_path = save_results_path
+        self.logger = get_logger("root")
+
+        # create video writer
+        fourcc = cv2.VideoWriter_fourcc(*'MJPG')
+        self.im_height,self.im_width, _ = cv2.imread(os.path.join(self.srcDir,self.image_names[0])).shape
+        self.writer = cv2.VideoWriter(self.save_video_path, fourcc, 20, (self.im_width, self.im_height))
+
+    def run(self):
+        start = time.time()
+        results = []
+        for idx_frame, ori_im in enumerate(self.image_names) :
+            ori_im = os.path.join(self.srcDir, ori_im)
+            # print(ori_im)
+            im = cv2.imread(ori_im, cv2.COLOR_BGR2RGB)
+            # do detection
+            bbox_xywh, cls_conf, cls_ids = self.detector(im)
+            # select person class
+            mask = cls_ids == 0
+            bbox_xywh = bbox_xywh[mask]
+
+            # bbox dilation just in case bbox too small, delete this line if using a better pedestrian detector
+            bbox_xywh[:, 3:] *= 1.2
+            cls_conf = cls_conf[mask]
+
+            if self.cfg.USE_FSINET :
+                attrFile = os.path.join(args.attr_dir, F"{os.path.basename(ori_im).split('.')[0]}.json")
+            else :
+                attrFile = None
+            # do tracking
+            outputs = self.deepsort.update(bbox_xywh, cls_conf, im,attrFile)        
+            # print(bbox_xywh)
+            # draw boxes for visualization
+            if len(outputs) > 0:
+                bbox_tlwh = []
+                bbox_xyxy = outputs[:, :4]
+                identities = outputs[:, -1]
+                im = draw_boxes(im, bbox_xyxy, identities)
+
+                for bb_xyxy in bbox_xyxy:
+                    bbox_tlwh.append(self.deepsort._xyxy_to_tlwh(bb_xyxy))
+
+                results.append((idx_frame - 1, bbox_tlwh, identities))
+
+            end = time.time()
+
+            # save results
+            write_results(self.save_results_path, results, 'mot')
+
+            if self.args.save_path:
+                self.writer.write(im)
+
+            # logging
+            # self.logger.info("time: {:.03f}s, fps: {:.03f}, detection numbers: {}, tracking numbers: {}" \
+            #                     .format(end - start, 1 / (end - start), bbox_xywh.shape[0], len(outputs)))
+
+
 def parse_args():
     parser = argparse.ArgumentParser()
-    parser.add_argument("VIDEO_PATH", type=str)
+    parser.add_argument("--video_path", type=str)
+    parser.add_argument("--src_dir", type=str)
+    parser.add_argument("--attr_dir", type=str)
+    parser.add_argument("--func",type=str, required=True)
     parser.add_argument("--config_mmdetection", type=str, default="./configs/mmdet.yaml")
     parser.add_argument("--config_detection", type=str, default="./configs/yolov3.yaml")
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
     parser.add_argument("--config_fastreid", type=str, default="./configs/fastreid.yaml")
+    parser.add_argument("--config_fsinet", type=str, default="./configs/fsinet.yaml")
     parser.add_argument("--fastreid", action="store_true")
+    parser.add_argument("--fsinet", action="store_true")
     parser.add_argument("--mmdet", action="store_true")
     # parser.add_argument("--ignore_display", dest="display", action="store_false", default=True)
     parser.add_argument("--display", action="store_true")
@@ -165,6 +246,16 @@ if __name__ == "__main__":
         cfg.USE_FASTREID = True
     else:
         cfg.USE_FASTREID = False
+    
+    if args.fsinet:
+        cfg.USE_FSINET = True
+        cfg.merge_from_file(args.config_fsinet)
+    else :
+        cfg.USE_FSINET = False
 
-    with VideoTracker(cfg, args, video_path=args.VIDEO_PATH) as vdo_trk:
-        vdo_trk.run()
+    if args.func == "video" :
+        with VideoTracker(cfg, args, video_path=args.video_path) as vdo_trk:
+            vdo_trk.run()
+    elif args.func == "img_seq" :
+        img_trk =  imgSeqTracker(cfg, args, args.src_dir)
+        img_trk.run()

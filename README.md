@@ -160,6 +160,11 @@ Then you can try [train.py](deep_sort/deep/train.py) to train your own parameter
 ![2.jpg](demo/2.jpg)
 
 
+## FSINET
+cmd to run FSINET
+`python deepsort.py --func img_seq --src_dir ~/Documents/PhDStuff/privacyFrameworkWithMetadata/tmp/pred/pare_results/ --attr_dir ~/Documents/PhDStuff/privacyFrameworkWithMetadata/tmp/metadata/ --fsinet`
+
+
 ## References
 - paper: [Simple Online and Realtime Tracking with a Deep Association Metric](https://arxiv.org/abs/1703.07402)
 
