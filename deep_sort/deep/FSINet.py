@@ -69,6 +69,11 @@ class FusedSimilarityNet(nn.Module):
                                 ],dim=2).squeeze()
 
         embed_f = self.embed_fc(embed_base)
+
+        if embed_f.dim() == 1 :
+            embed_f = embed_f.unsqueeze(0)
+        # print(embed_f.shape, img_f.shape)
+        
         out = self.fsi_out(torch.cat([img_f,embed_f],dim=1))
         # logger.info(F"{img_f.shape}, {embed_f.shape},{out.shape}")
         # return {

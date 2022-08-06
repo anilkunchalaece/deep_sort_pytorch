@@ -22,9 +22,32 @@ def write_results(filename, results, data_type):
                     continue
                 x1, y1, w, h = tlwh
                 x2, y2 = x1 + w, y1 + h
+                x1,y1,x2,y2,w,h = resizeBbox([x1,y1,x2,y2,w,h])
                 line = save_format.format(frame=frame_id, id=track_id, x1=x1, y1=y1, x2=x2, y2=y2, w=w, h=h)
                 f.write(line)
 
+
+def resizeBbox(bbox):
+    # bbox will be in x1 y1 x2 y2 format
+    # out_*_size is the size of mot dataset image size
+    # in size is the size of the dataset i'm currently using
+    out_img_width = 1920#432
+    out_img_height = 1080#240
+    in_img_width = 432#1920
+    in_img_height = 240#1080
+
+    x_scale = out_img_width/in_img_width
+    y_scale = out_img_height/in_img_height
+
+    bbox[0] = int(bbox[0]*x_scale)
+    bbox[1] = int(bbox[1]*y_scale) 
+    bbox[2] = int(bbox[2]*x_scale)
+    bbox[3] = int(bbox[3]*y_scale)
+    w = int(bbox[4]*x_scale)
+    h = int(bbox[5]*y_scale)
+
+
+    return bbox[0], bbox[1], bbox[2], bbox[3], w, h
 
 # def write_results(filename, results_dict: Dict, data_type: str):
 #     if not filename:

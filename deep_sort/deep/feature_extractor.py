@@ -90,7 +90,12 @@ class FSINetFeatureExtractor(object):
     def __init__(self,model_config, model_path, use_cuda=True):
         self.device = "cuda" if torch.cuda.is_available() and use_cuda else "cpu" 
         self.net = FusedSimilarityNet(model_config)
-        self.net.load_state_dict(torch.load(model_path))
+        try :
+            state_dict , _ = torch.load(model_path)
+        except ValueError :
+            state_dict = torch.load(model_path)
+            
+        self.net.load_state_dict(state_dict)
         self.net = self.net.to(self.device)
         self.net.eval()
 

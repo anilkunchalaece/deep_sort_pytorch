@@ -28,6 +28,10 @@ def main(data_root='', seqs=('',), args=""):
     cfg.USE_FASTREID = False
     cfg.USE_MMDET = False
     cfg.USE_FSINET = False
+    if cfg.USE_FSINET :
+        cfg.merge_from_file(args.config_fsinet)
+    else :
+        attr_dir = None
 
     # run tracking
     accs = []
@@ -35,13 +39,16 @@ def main(data_root='', seqs=('',), args=""):
         logger.info('start seq: {}'.format(seq))
         result_filename = os.path.join(result_root, '{}.txt'.format(seq))
         # video_path = data_root+"/"+seq+"/video/video.mp4"
-        src_dir = data_root+"/"+seq+"/img1"
+        # src_dir = data_root+"/"+seq+"/img1"
+        src_dir = data_root+"/"+seq+"/wireframes/pred/pare_results/"
+        # attr_dir = data_root+"/"+seq+"/wireframes/metadata/"
+        # src_dir = data_root+"/"+seq+"/wireframes/src/orig_images_scaled/"
 
         # with VideoTracker(cfg, args, video_path) as vdo_trk:
         #     vdo_trk.run()
 
         img_trk =  imgSeqTracker(cfg, args, src_dir,result_filename)
-        img_trk.run()
+        img_trk.run(attr_dir)
 
         # eval
         logger.info('Evaluate seq: {}'.format(seq))
@@ -67,6 +74,7 @@ def parse_args():
     parser = argparse.ArgumentParser()
     parser.add_argument("--config_detection", type=str, default="./configs/yolov3.yaml")
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
+    parser.add_argument("--config_fsinet", type=str, default="./configs/fsinet.yaml")
     parser.add_argument("--ignore_display", dest="display", action="store_false", default=False)
     parser.add_argument("--frame_interval", type=int, default=1)
     parser.add_argument("--display_width", type=int, default=800)
@@ -90,7 +98,6 @@ if __name__ == '__main__':
 
     seqs_str = '''
                   MOT16-02       
-                  MOT16-05
                   '''     
 
 

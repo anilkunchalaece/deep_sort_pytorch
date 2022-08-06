@@ -157,7 +157,7 @@ class imgSeqTracker:
         self.im_height,self.im_width, _ = cv2.imread(os.path.join(self.srcDir,self.image_names[0])).shape
         self.writer = cv2.VideoWriter(self.save_video_path, fourcc, 20, (self.im_width, self.im_height))
 
-    def run(self):
+    def run(self,attrDir=None):
         start = time.time()
         results = []
         for idx_frame, ori_im in enumerate(self.image_names) :
@@ -175,7 +175,9 @@ class imgSeqTracker:
             cls_conf = cls_conf[mask]
 
             if self.cfg.USE_FSINET :
-                attrFile = os.path.join(args.attr_dir, F"{os.path.basename(ori_im).split('.')[0]}.json")
+                if attrDir == None :
+                    attrDir = self.args.attr_dir
+                attrFile = os.path.join(attrDir, F"{os.path.basename(ori_im).split('.')[0]}.json")
             else :
                 attrFile = None
             # do tracking
