@@ -159,12 +159,13 @@ class DeepSort(object):
             im = ori_img[y1:y2,x1:x2]
             im_crops.append(im)
             if attrFile != None :
-                # print(torchvision.ops.box_iou(torch.tensor([[x1,y1,x2,y2]],dtype=torch.float32),bboxes_attr))
+                # print(torch.max(torchvision.ops.box_iou(torch.tensor([[x1,y1,x2,y2]],dtype=torch.float32),bboxes_attr)))
                 attr_idx = torch.argmax(torchvision.ops.box_iou(torch.tensor([[x1,y1,x2,y2]],dtype=torch.float32),bboxes_attr))
                 crop_attr.append(bboxes_attr_org[attr_idx]["attr"])
         if im_crops:
             if attrFile != None :
                 features = self.extractor(im_crops,crop_attr)
+                # print(features.shape)
             else :
                 features = self.extractor(im_crops)
             # print(features.shape)

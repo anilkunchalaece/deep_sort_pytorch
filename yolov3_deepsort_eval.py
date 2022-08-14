@@ -36,11 +36,13 @@ def main(data_root='', seqs=('',), args=""):
     # run tracking
     accs = []
     for seq in seqs:
-        logger.info('start seq: {}'.format(seq))
+        print('start seq: {}'.format(seq))
         result_filename = os.path.join(result_root, '{}.txt'.format(seq))
         # video_path = data_root+"/"+seq+"/video/video.mp4"
         # src_dir = data_root+"/"+seq+"/img1"
         src_dir = data_root+"/"+seq+"/wireframes/pred/pare_results/"
+        attr_dir = None
+        cfg.USE_FSINET = False
         # attr_dir = data_root+"/"+seq+"/wireframes/metadata/"
         # src_dir = data_root+"/"+seq+"/wireframes/src/orig_images_scaled/"
 
@@ -51,7 +53,102 @@ def main(data_root='', seqs=('',), args=""):
         img_trk.run(attr_dir)
 
         # eval
-        logger.info('Evaluate seq: {}'.format(seq))
+        print('Evaluate seq: {}'.format(seq))
+        evaluator = Evaluator(data_root, seq, data_type)
+        accs.append(evaluator.eval_file(result_filename))
+        print(F"results saved in {result_filename}")
+
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
+        cfg.USE_FSINET = True
+        cfg.merge_from_file(args.config_fsinet)
+
+        # run with FSINet
+        result_filename = os.path.join(result_root, '{}_FSI_FUSED.txt'.format(seq))
+        # video_path = data_root+"/"+seq+"/video/video.mp4"
+        # src_dir = data_root+"/"+seq+"/img1"
+        src_dir = data_root+"/"+seq+"/wireframes/pred/pare_results/"
+        attr_dir = data_root+"/"+seq+"/wireframes/metadata/"
+        # src_dir = data_root+"/"+seq+"/wireframes/src/orig_images_scaled/"
+
+        # with VideoTracker(cfg, args, video_path) as vdo_trk:
+        #     vdo_trk.run()
+
+        img_trk =  imgSeqTracker(cfg, args, src_dir,result_filename)
+        img_trk.run(attr_dir)
+
+        print('Evaluate seq: {}'.format(seq))
+        evaluator = Evaluator(data_root, seq, data_type)
+        accs.append(evaluator.eval_file(result_filename))
+        print(F"results saved in {result_filename}")
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
+        cfg.USE_FSINET = True
+        cfg.merge_from_file(args.config_fsinet_different_color_without_background)
+
+        # run with FSINet
+        result_filename = os.path.join(result_root, '{}_FSI_FUSED_DIFF_COLOR_WITHOUT_BG.txt'.format(seq))
+        # video_path = data_root+"/"+seq+"/video/video.mp4"
+        # src_dir = data_root+"/"+seq+"/img1"
+        src_dir = data_root+"/"+seq+"/wireframes/pred/pare_results/"
+        attr_dir = data_root+"/"+seq+"/wireframes/metadata/"
+        # src_dir = data_root+"/"+seq+"/wireframes/src/orig_images_scaled/"
+
+        # with VideoTracker(cfg, args, video_path) as vdo_trk:
+        #     vdo_trk.run()
+
+        img_trk =  imgSeqTracker(cfg, args, src_dir,result_filename)
+        img_trk.run(attr_dir)
+
+        # eval
+        print('Evaluate seq: {}'.format(seq))
+        evaluator = Evaluator(data_root, seq, data_type)
+        accs.append(evaluator.eval_file(result_filename))
+        print(F"results saved in {result_filename}")
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
+        cfg.USE_FSINET = True
+        cfg.merge_from_file(args.config_fsinet_different_color_with_background)
+
+        # run with FSINet
+        result_filename = os.path.join(result_root, '{}_FSI_FUSED_DIFF_COLOR_WITH_BG.txt'.format(seq))
+        # video_path = data_root+"/"+seq+"/video/video.mp4"
+        # src_dir = data_root+"/"+seq+"/img1"
+        src_dir = data_root+"/"+seq+"/wireframes/pred/pare_results/"
+        attr_dir = data_root+"/"+seq+"/wireframes/metadata/"
+        # src_dir = data_root+"/"+seq+"/wireframes/src/orig_images_scaled/"
+
+        # with VideoTracker(cfg, args, video_path) as vdo_trk:
+        #     vdo_trk.run()
+
+        img_trk =  imgSeqTracker(cfg, args, src_dir,result_filename)
+        img_trk.run(attr_dir)
+
+        # eval
+        print('Evaluate seq: {}'.format(seq))
+        evaluator = Evaluator(data_root, seq, data_type)
+        accs.append(evaluator.eval_file(result_filename))
+        print(F"results saved in {result_filename}")
+        print("@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+
+        cfg.USE_FSINET = True
+        cfg.merge_from_file(args.config_fsinet_img_only)
+        # run with FSINet
+        result_filename = os.path.join(result_root, '{}_FSI_IMG_ONLY.txt'.format(seq))
+        # video_path = data_root+"/"+seq+"/video/video.mp4"
+        # src_dir = data_root+"/"+seq+"/img1"
+        src_dir = data_root+"/"+seq+"/wireframes/pred/pare_results/"
+        attr_dir = data_root+"/"+seq+"/wireframes/metadata/"
+        # src_dir = data_root+"/"+seq+"/wireframes/src/orig_images_scaled/"
+
+        # with VideoTracker(cfg, args, video_path) as vdo_trk:
+        #     vdo_trk.run()
+
+        img_trk =  imgSeqTracker(cfg, args, src_dir,result_filename)
+        img_trk.run(attr_dir)
+
+        # eval
+        print('Evaluate seq: {}'.format(seq))
         evaluator = Evaluator(data_root, seq, data_type)
         accs.append(evaluator.eval_file(result_filename))
         print(F"results saved in {result_filename}")
@@ -60,7 +157,12 @@ def main(data_root='', seqs=('',), args=""):
     # get summary
     metrics = mm.metrics.motchallenge_metrics
     mh = mm.metrics.create()
-    summary = Evaluator.get_summary(accs, seqs, metrics)
+    new_seqs = []
+    for s in seqs :
+        new_seqs.extend([s, s+"fsi_FUSED" , s+"diff_color_without_bg", s+"diff_color_with_bg",s+"fsi_IMG_ONLY"])
+        # new_seqs.extend([s, s+"fsi_FUSED" ])
+
+    summary = Evaluator.get_summary(accs, new_seqs, metrics)
     strsummary = mm.io.render_summary(
         summary,
         formatters=mh.formatters,
@@ -75,6 +177,9 @@ def parse_args():
     parser.add_argument("--config_detection", type=str, default="./configs/yolov3.yaml")
     parser.add_argument("--config_deepsort", type=str, default="./configs/deep_sort.yaml")
     parser.add_argument("--config_fsinet", type=str, default="./configs/fsinet.yaml")
+    parser.add_argument("--config_fsinet_img_only", type=str, default="./configs/fsinet_img_only.yaml")
+    parser.add_argument("--config_fsinet_different_color_without_background", type=str, default="./configs/fsinet_different_color_without_background.yaml")
+    parser.add_argument("--config_fsinet_different_color_with_background", type=str, default="./configs/fsinet_different_color_with_background.yaml")
     parser.add_argument("--ignore_display", dest="display", action="store_false", default=False)
     parser.add_argument("--frame_interval", type=int, default=1)
     parser.add_argument("--display_width", type=int, default=800)
@@ -87,18 +192,19 @@ def parse_args():
 if __name__ == '__main__':
     args = parse_args()
 
-    # seqs_str = '''MOT16-02       
-    #               MOT16-04
-    #               MOT16-05
-    #               MOT16-09
-    #               MOT16-10
-    #               MOT16-11
-    #               MOT16-13
-    #               '''     
-
-    seqs_str = '''
-                  MOT16-02       
+    seqs_str = '''MOT16-02       
+                  MOT16-04
+                  MOT16-05
+                  MOT16-09
+                  MOT16-10
+                  MOT16-11
+                  MOT16-13
                   '''     
+
+    # seqs_str = '''
+    #               MOT16-02
+    #               MOT16-04       
+    #               '''     
 
 
     data_root = '/home/akunchala/Documents/z_Datasets/MOT16/train'

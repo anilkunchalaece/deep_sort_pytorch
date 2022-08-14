@@ -90,6 +90,7 @@ class FSINetFeatureExtractor(object):
     def __init__(self,model_config, model_path, use_cuda=True):
         self.device = "cuda" if torch.cuda.is_available() and use_cuda else "cpu" 
         self.net = FusedSimilarityNet(model_config)
+        print(F"loading weights from {model_path}")
         try :
             state_dict , _ = torch.load(model_path)
         except ValueError :
@@ -99,10 +100,10 @@ class FSINetFeatureExtractor(object):
         self.net = self.net.to(self.device)
         self.net.eval()
 
-        self.size = (60,120)
+        self.size = (64,128)
         self.norm = transforms.Compose([
             transforms.ToTensor(),
-            transforms.Normalize((0.5,0.5,0.5), (0.5,0.5,0.5))
+            transforms.Normalize([0.485, 0.456, 0.406], [0.229, 0.224, 0.225])
         ])
         self.defineAttr()
 
